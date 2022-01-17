@@ -10,11 +10,10 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  */
 contract Erc1155IPFS is ERC1155, Ownable {
     string metadata_uri;
-    mapping(uint256 => string) public _idToEventMetadata;
-    mapping(string => uint256) public _metadataToEventId;
+    mapping(uint256 => string) public _idToMetadata;
+    mapping(string => uint256) public _metadataToId;
     mapping(uint256 => address) public _creators;
     mapping(address => uint256[]) public _created;
-    mapping(address => uint256[]) public _received;
     uint256 nonce = 0;
 
     constructor()
@@ -35,15 +34,15 @@ contract Erc1155IPFS is ERC1155, Ownable {
         string memory metadata
     ) public returns (uint256) {
         require(
-            _metadataToEventId[metadata] == 0,
-            "Erc1155IPFS: Trying to push same event to another id"
+            _metadataToId[metadata] == 0,
+            "Erc1155IPFS: Trying to push same metadata to another id"
         );
         uint256 id = uint256(
             keccak256(
                 abi.encodePacked(nonce, msg.sender, blockhash(block.number - 1))
             )
         );
-        while (bytes(_idToEventMetadata[id]).length > 0) {
+        while (bytes(_idToMetadata[id]).length > 0) {
             nonce += 1;
             id = uint256(
                 keccak256(
@@ -55,8 +54,8 @@ contract Erc1155IPFS is ERC1155, Ownable {
                 )
             );
         }
-        _idToEventMetadata[id] = metadata;
-        _metadataToEventId[metadata] = id;
+        _idToMetadata[id] = metadata;
+        _metadataToId[metadata] = id;
         _creators[id] = msg.sender;
         _created[msg.sender].push(id);
         return id;
@@ -70,20 +69,12 @@ contract Erc1155IPFS is ERC1155, Ownable {
         return _created[_creator];
     }
 
-    function received(address _receiver)
-        public
-        view
-        returns (uint256[] memory receivedTokens)
-    {
-        return _received[_receiver];
-    }
-
     function tokenCID(uint256 id)
         public
         view
         returns (string memory)
     {
-        return _idToEventMetadata[id];
+        return _idToMetadata[id];
     }
 
     function mint(uint256 id, uint256 amount) public {
