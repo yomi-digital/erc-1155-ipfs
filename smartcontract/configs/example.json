@@ -1,0 +1,7 @@
+{
+    "network": "ganache",
+    "contract_address": "THIS_FIELD_WILL_BE_AUTOMATICALLY_FIELD",
+    "owner_mnemonic": "OWNER_MNEMONIC",
+    "owner_address": "OWNER_ADDRESS",
+    "provider": "http://localhost:7545"
+}
