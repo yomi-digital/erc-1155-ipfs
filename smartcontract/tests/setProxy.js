@@ -1,9 +1,6 @@
 const HDWalletProvider = require("@truffle/hdwallet-provider");
 const web3 = require("web3");
 require('dotenv').config()
-const MNEMONIC = process.env.GANACHE_MNEMONIC;
-const NFT_CONTRACT_ADDRESS = process.env.GANACHE_CONTRACT_ADDRESS;
-const OWNER_ADDRESS = process.env.GANACHE_OWNER_ADDRESS;
 const NFT_CONTRACT_ABI = require('../abi.json')
 const argv = require('minimist')(process.argv.slice(2));
 const fs = require('fs')
@@ -20,29 +17,26 @@ async function main() {
         const nftContract = new web3Instance.eth.Contract(
             NFT_CONTRACT_ABI,
             configs.contract_address, {
-                gasLimit: "500000"
+                gasLimit: "500000",
+                gasPrice: "100000000000"
             }
         );
-        // CUSTOMIZE THE AMOUNT MINTED AND TOKEN ID
-        const ipfs_string = "bafkreidpqdpapp3k2ycdhftfizsslbqssfedlbeuqfsvqbknpud2xn4eg4"
+
         try {
-            let nonce = await web3Instance.eth.getTransactionCount(configs.owner_address)
-            console.log('Trying preparing event type ' + ipfs_string + ' with ' + configs.owner_address + ' with nonce ' + nonce + '...')
+            console.log('Trying setting new URI...')
             const result = await nftContract.methods
-                .prepare(configs.owner_address, ipfs_string)
+                .setProxyAddress(configs.owner_address)
                 .send({
                     from: configs.owner_address,
-                    nonce: nonce,
                     gasPrice: "100000000000"
-                }).on('transactionHash', pending => {
-                    console.log('Pending TX is: ' + pending)
-                })
-            console.log("Event prepared! Transaction: " + result.transactionHash)
+                });
+            console.log("Done! Transaction: " + result.transactionHash);
+            console.log(result)
+            process.exit();
         } catch (e) {
             console.log(e)
+            process.exit();
         }
-        console.log('Finished!')
-        process.exit()
     } else {
         console.log('Please provide `owner_mnemonic` first.')
     }

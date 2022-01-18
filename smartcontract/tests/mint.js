@@ -34,28 +34,25 @@ async function main() {
         const nft_type = created[created.length - 1]
         const metadata = await nftContract.methods._idToMetadata(nft_type).call()
         console.log('IPFS hash is:', metadata)
-        const amount = 1000
+        const toMint = 1000
+
         try {
             const check = await nftContract.methods.balanceOf(configs.owner_address, nft_type).call()
             console.log('Balance of type ' + nft_type + ' is ' + check)
-            if (parseInt(check) < amount) {
-                const toMint = amount - parseInt(check)
-                console.log('Need to mint ' + toMint + ' NFTs, minting..')
-                let nonce = await web3Instance.eth.getTransactionCount(configs.owner_address)
-                console.log('Trying minting NFT ' + nft_type + '(' + metadata + ') with ' + configs.owner_address + ' with nonce ' + nonce + '...')
-                const result = await nftContract.methods
-                    .mint(metadata, toMint)
-                    .send({
-                        from: configs.owner_address,
-                        nonce: nonce,
-                        gasPrice: "100000000000"
-                    }).on('transactionHash', pending => {
-                        console.log('Pending TX is: ' + pending)
-                    })
-                console.log("NFT minted! Transaction: " + result.transactionHash);
-            } else {
-                console.log('NFT ' + nft_type + ' minted yet')
-            }
+            console.log('Need to mint ' + toMint + ' NFTs, minting..')
+            let nonce = await web3Instance.eth.getTransactionCount(configs.owner_address)
+            console.log('Trying minting NFT ' + nft_type + '(' + metadata + ') with ' + configs.owner_address + ' with nonce ' + nonce + '...')
+            const result = await nftContract.methods
+                .mint(configs.owner_address, metadata, toMint)
+                .send({
+                    from: configs.owner_address,
+                    nonce: nonce,
+                    gasPrice: "100000000000"
+                }).on('transactionHash', pending => {
+                    console.log('Pending TX is: ' + pending)
+                })
+            console.log('Minted ID is:', result['events']['TransferSingle']['returnValues']['id'])
+            console.log("NFT minted! Transaction: " + result.transactionHash);
         } catch (e) {
             console.log(e)
         }

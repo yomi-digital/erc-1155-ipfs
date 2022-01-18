@@ -14,11 +14,10 @@ contract Erc1155IPFS is ERC1155, Ownable {
     mapping(string => uint256) public _metadataToId;
     mapping(uint256 => address) public _creators;
     mapping(address => uint256[]) public _created;
+    address _proxyAddress;
     uint256 nonce = 0;
 
-    constructor()
-        ERC1155("https://bridgedomain.xyz/nft/{id}.json")
-    {
+    constructor() ERC1155("https://bridgedomain.xyz/nft/{id}.json") {
         metadata_uri = "https://bridgedomain.xyz/nft/{id}.json";
     }
 
@@ -30,9 +29,21 @@ contract Erc1155IPFS is ERC1155, Ownable {
         _setURI(newuri);
     }
 
-    function prepare(
-        string memory metadata
-    ) public returns (uint256) {
+    /**
+     * Admin functions to set the proxy address
+     */
+    function setProxyAddress(address newproxy) public onlyOwner {
+        _proxyAddress = newproxy;
+    }
+
+    function prepare(address creator, string memory metadata)
+        public
+        returns (uint256)
+    {
+        require(
+            msg.sender == _proxyAddress,
+            "Erc1155IPFS: Only the proxy address can prepare nfts"
+        );
         require(
             _metadataToId[metadata] == 0,
             "Erc1155IPFS: Trying to push same metadata to another id"
@@ -56,8 +67,8 @@ contract Erc1155IPFS is ERC1155, Ownable {
         }
         _idToMetadata[id] = metadata;
         _metadataToId[metadata] = id;
-        _creators[id] = msg.sender;
-        _created[msg.sender].push(id);
+        _creators[id] = creator;
+        _created[creator].push(id);
         return id;
     }
 
@@ -69,25 +80,23 @@ contract Erc1155IPFS is ERC1155, Ownable {
         return _created[_creator];
     }
 
-    function tokenCID(uint256 id)
-        public
-        view
-        returns (string memory)
-    {
+    function tokenCID(uint256 id) public view returns (string memory) {
         return _idToMetadata[id];
     }
 
-    function mint(string memory metadata, uint256 amount) public {
+    function mint(address receiver, string memory metadata, uint256 amount) public returns (uint256) {
         require(
             _metadataToId[metadata] > 0,
             "Erc1155IPFS: Minting a non-existent nft"
         );
         uint256 id = _metadataToId[metadata];
         require(
-            _creators[id] == msg.sender,
+            _creators[id] == msg.sender ||
+            _proxyAddress == msg.sender,
             "Erc1155IPFS: Can't mint tokens you haven't created"
         );
-        _mint(msg.sender, id, amount, bytes(""));
+        _mint(receiver, id, amount, bytes(""));
+        return id;
     }
 
     /**
