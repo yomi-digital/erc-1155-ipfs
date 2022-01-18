@@ -27,7 +27,9 @@ Now let's say you want to compile to ganache, so create the file `configs/ganach
 
 When you've completed the configuration you can use following command to compile the contract:
 
-```npm run deploy ganache```
+```
+npm run deploy ganache
+```
 
 If everything is correct you will see the `contract_address` parameter automatically filled by the deployer.
 
@@ -36,9 +38,9 @@ If everything is correct you will see the `contract_address` parameter automatic
 To run tests you can use what we've prepared for you buy one of following:
 
 ```
-npm run test:prepare ganache
-npm run test:mint ganache
-npm run test:created ganache
+npm run test:prepare ganache -> This test will prepare an NFT, by passing the IPFS hash
+npm run test:mint ganache -> This test will mint the actual NFT, by passing the IPFS hash
+npm run test:created ganache -> This test will return all the created NFTs
 ```
 
 ## Use the API

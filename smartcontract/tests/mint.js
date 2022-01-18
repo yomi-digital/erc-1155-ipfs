@@ -20,8 +20,8 @@ async function main() {
         const nftContract = new web3Instance.eth.Contract(
             NFT_CONTRACT_ABI,
             configs.contract_address, {
-                gasLimit: "5000000"
-            }
+            gasLimit: "5000000"
+        }
         );
         // CUSTOMIZE THE AMOUNT MINTED AND TOKEN ID
         const created = await nftContract.methods
@@ -32,6 +32,8 @@ async function main() {
             process.exit()
         }
         const nft_type = created[created.length - 1]
+        const metadata = await nftContract.methods._idToMetadata(nft_type).call()
+        console.log('IPFS hash is:', metadata)
         const amount = 1000
         try {
             const check = await nftContract.methods.balanceOf(configs.owner_address, nft_type).call()
@@ -40,9 +42,9 @@ async function main() {
                 const toMint = amount - parseInt(check)
                 console.log('Need to mint ' + toMint + ' NFTs, minting..')
                 let nonce = await web3Instance.eth.getTransactionCount(configs.owner_address)
-                console.log('Trying minting NFT ' + nft_type + ' with ' + configs.owner_address + ' with nonce ' + nonce + '...')
+                console.log('Trying minting NFT ' + nft_type + '(' + metadata + ') with ' + configs.owner_address + ' with nonce ' + nonce + '...')
                 const result = await nftContract.methods
-                    .mint(nft_type, toMint)
+                    .mint(metadata, toMint)
                     .send({
                         from: configs.owner_address,
                         nonce: nonce,

@@ -876,9 +876,9 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "id",
-        "type": "uint256"
+        "internalType": "string",
+        "name": "metadata",
+        "type": "string"
       },
       {
         "internalType": "uint256",

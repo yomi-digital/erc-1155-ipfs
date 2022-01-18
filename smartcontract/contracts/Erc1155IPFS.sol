@@ -77,7 +77,12 @@ contract Erc1155IPFS is ERC1155, Ownable {
         return _idToMetadata[id];
     }
 
-    function mint(uint256 id, uint256 amount) public {
+    function mint(string memory metadata, uint256 amount) public {
+        require(
+            _metadataToId[metadata] > 0,
+            "Erc1155IPFS: Minting a non-existent nft"
+        );
+        uint256 id = _metadataToId[metadata];
         require(
             _creators[id] == msg.sender,
             "Erc1155IPFS: Can't mint tokens you haven't created"
