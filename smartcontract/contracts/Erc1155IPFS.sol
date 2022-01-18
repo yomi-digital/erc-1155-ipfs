@@ -17,9 +17,9 @@ contract Erc1155IPFS is ERC1155, Ownable {
     uint256 nonce = 0;
 
     constructor()
-        ERC1155("https://bridgedomain.xyz/{id}.json")
+        ERC1155("https://bridgedomain.xyz/nft/{id}.json")
     {
-        metadata_uri = "https://bridgedomain.xyz/{id}.json";
+        metadata_uri = "https://bridgedomain.xyz/nft/{id}.json";
     }
 
     /**

@@ -24,7 +24,7 @@ async function main() {
             }
         );
         // CUSTOMIZE THE AMOUNT MINTED AND TOKEN ID
-        const ipfs_string = "QmfJoTDeirpXZxYTsqS49Y6cTczj1shA4w9YdzJK37vDkt"
+        const ipfs_string = "QmdvAiMDnacmpokNPoiMG1AjnH3fvSg69nmuUkhYYe6tQo"
         try {
             let nonce = await web3Instance.eth.getTransactionCount(configs.owner_address)
             console.log('Trying preparing event type ' + ipfs_string + ' with ' + configs.owner_address + ' with nonce ' + nonce + '...')

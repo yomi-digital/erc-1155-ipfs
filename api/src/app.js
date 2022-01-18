@@ -26,6 +26,15 @@ app.use(express.json())
 
 // Handle metadata upload
 app.post('/upload', async (req, res) => {
+    if (process.env.UPLOAD_KEY === undefined) {
+        return res.status(500).json({
+            error: 'Upload endpoint is not enabled.'
+        });
+    }
+    if (!req.headers.authorization || (req.headers.authorization !== undefined && req.headers.authorization.replace('Bearer ', '') !== process.env.UPLOAD_KEY)) {
+        return res.status(401).json({ error: 'Unauthorized request.' });
+    }
+    // Validating file
     let file
     if (req.files === undefined || (req.files !== undefined && req.files.file === undefined)) {
         return res.status(500).json({
@@ -34,16 +43,24 @@ app.post('/upload', async (req, res) => {
     } else {
         file = req.files.file
     }
+    // Validating name
     if (req.body.name === undefined) {
         return res.status(500).json({
             error: 'No name specified.'
         });
     }
-    if (req.body.start_timestamp === undefined || req.body.end_timestamp === undefined) {
-        return res.status(500).json({
-            error: 'No start time or end time specified.'
-        });
+    // Validating attributes
+    let attributes
+    if (req.body.attributes !== undefined) {
+        try {
+            attributes = JSON.parse(req.body.attributes)
+        } catch (e) {
+            return res.status(500).json({
+                error: 'Attributes are not valid.'
+            });
+        }
     }
+    // Uploading files to IPFS
     try {
         const pinata = pinataSDK(process.env.PINATA_KEY, process.env.PINATA_SECRET);
         const fileCID = await pinata.pinFileToIPFS(fs.createReadStream(file.tempFilePath));
@@ -51,10 +68,7 @@ app.post('/upload', async (req, res) => {
             "description": req.body.description,
             "external_url": req.body.external_url,
             "image": "ipfs://" + fileCID.IpfsHash,
-            "start_datetime": new Date(parseInt(req.body.start_timestamp)).toUTCString(),
-            "end_datetime": new Date(parseInt(req.body.end_timestamp)).toUTCString(),
-            "start_timestamp": parseInt(req.body.start_timestamp),
-            "end_timestamp": parseInt(req.body.end_timestamp),
+            "attributes": attributes,
             "name": req.body.name
         }
         const metadataCID = await pinata.pinJSONToIPFS(metadata, { pinataMetadata: { name: req.body.name } })
@@ -64,8 +78,9 @@ app.post('/upload', async (req, res) => {
         return res.status(500).json({ error: 'File upload failed, please retry.' });
     }
 });
+
 // Handle metadata request
-app.get("/:nftId", async function (req, res) {
+app.get("/nft/:nftId", async function (req, res) {
     try {
         const provider = new HDWalletProvider(
             process.env.DUMMY_MNEMONIC,
