@@ -23,7 +23,7 @@ async function main() {
         );
 
         try {
-            console.log('Trying setting new URI...')
+            console.log('Trying setting new proxy...')
             const result = await nftContract.methods
                 .setProxyAddress(configs.owner_address)
                 .send({
