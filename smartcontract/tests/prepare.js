@@ -29,7 +29,7 @@ async function main() {
             let nonce = await web3Instance.eth.getTransactionCount(configs.owner_address)
             console.log('Trying preparing event type ' + ipfs_string + ' with ' + configs.owner_address + ' with nonce ' + nonce + '...')
             const result = await nftContract.methods
-                .prepare(configs.owner_address, ipfs_string)
+                .prepare(configs.owner_address, ipfs_string, 500)
                 .send({
                     from: configs.owner_address,
                     nonce: nonce,

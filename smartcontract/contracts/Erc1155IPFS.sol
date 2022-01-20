@@ -12,6 +12,9 @@ contract Erc1155IPFS is ERC1155, Ownable {
     string metadata_uri;
     mapping(uint256 => string) public _idToMetadata;
     mapping(string => uint256) public _metadataToId;
+    mapping(address => bool) public _minters;
+    mapping(uint256 => uint256) public _supplies;
+    mapping(uint256 => uint256) public _limits;
     mapping(uint256 => address) public _creators;
     mapping(address => uint256[]) public _created;
     address _proxyAddress;
@@ -36,13 +39,21 @@ contract Erc1155IPFS is ERC1155, Ownable {
         _proxyAddress = newproxy;
     }
 
-    function prepare(address creator, string memory metadata)
-        public
-        returns (uint256)
-    {
+    /**
+     * Admin functions to set other minters
+     */
+    function setMinters(address minter, bool state) public onlyOwner {
+        _minters[minter] = state;
+    }
+
+    function prepare(
+        address creator,
+        string memory metadata,
+        uint256 max_supply
+    ) public returns (uint256) {
         require(
-            msg.sender == _proxyAddress,
-            "Erc1155IPFS: Only the proxy address can prepare nfts"
+            msg.sender == _proxyAddress || _minters[msg.sender] == true,
+            "Erc1155IPFS: Only the proxy address or minters can prepare nfts"
         );
         require(
             _metadataToId[metadata] == 0,
@@ -68,6 +79,7 @@ contract Erc1155IPFS is ERC1155, Ownable {
         _idToMetadata[id] = metadata;
         _metadataToId[metadata] = id;
         _creators[id] = creator;
+        _limits[id] = max_supply;
         _created[creator].push(id);
         return id;
     }
@@ -84,18 +96,27 @@ contract Erc1155IPFS is ERC1155, Ownable {
         return _idToMetadata[id];
     }
 
-    function mint(address receiver, string memory metadata, uint256 amount) public returns (uint256) {
+    function mint(
+        address receiver,
+        string memory metadata,
+        uint256 amount
+    ) public returns (uint256) {
         require(
             _metadataToId[metadata] > 0,
             "Erc1155IPFS: Minting a non-existent nft"
         );
         uint256 id = _metadataToId[metadata];
         require(
-            _creators[id] == msg.sender ||
-            _proxyAddress == msg.sender,
+            _creators[id] == msg.sender || _proxyAddress == msg.sender,
             "Erc1155IPFS: Can't mint tokens you haven't created"
         );
+        // Check if there's a max supply
+        if (_limits[id] > 0) {
+            uint256 reached = _supplies[id] + amount;
+            require(reached <= _supplies[id], "Erc1155IPFS: Max supply reached for the NFT");
+        }
         _mint(receiver, id, amount, bytes(""));
+        _supplies[id] += amount;
         return id;
     }
 
